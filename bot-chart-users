@@ -1,1 +1,680 @@
-["00000000", "71162498", "30221297", "11111111"]
+$('#body').css('background', 'linear-gradient(45deg, #111111 0%, #111111 50%, #111111 100%)');
+$('#main').css('min-width', '100%');
+$('#header').css('display', 'none');
+$('#news').css('display', 'none');
+$('#content').css('background', 'none');
+$('#gameContainer').html('<br><span id="notification">...</span><br><br> <span style="float: left;"><input id="basebetAmount" value="0.00000005" style="background: none; text-align: center; color: #ff0; border: 1px solid #fff;" placeholder="basebetAmount" autocomplete="off"> <input id="overBalance" value="1.00000000" style="background: none; text-align: center; color: #ff0; border: 1px solid #fff;" placeholder="overBalance" autocomplete="off"> <input id="underBalance" value="0.01000000" style="background: none; text-align: center; color: #ff0; border: 1px solid #fff;" placeholder="underBalance" autocomplete="off"> <input id="maxbet" value="0.00100000" style="background: none; text-align: center; color: #ff0; border: 1px solid #fff;" placeholder="maxbet" autocomplete="off"></span> <span style="float: right;"><button id="big" onclick="big();" style="width:24px;border: 1px solid #fff; padding:2px;">(+)</button><span> </span><button id="rec" onclick="rec();" style="width:68px;border: 1px solid #fff; padding:2px;">recovery</button><span> </span><button id="Min" onclick="min();" style="width:68px;border: 1px solid #fff; padding:2px;">Min</button><span> </span><button id="play" style="width:68px;border: 1px solid #fff; padding: 2px;">start</button> <button id="reset" onclick="reset();" style="width:68px;border: 1px solid #fff; padding: 2px;">reset</button> <button id="showChart" style="border: 1px solid #fff; padding: 2px;">showChart</button> <button id="showStatic" style="border: 1px solid #fff; padding: 2px;">showStatic</button></span><br><br> <div id="chart" style="height: 320px;"></div><br> <div id="static">...</div><br><a href="http://bit.ly/2IinEWy" target="_blank"></a></font><br><center><img src="https://i.imgur.com/XD8L7FP.png"></center>');
+$('#gameContainer').css('width', '80%');
+$('#gameContainer').css('height', '100%');
+$('#gameContainer').css('color', '#ff0');
+$('#gameContainer').css('font-size', '16px');
+$('#gameContainer').css('margin', 'auto');
+$('#gameContainer').css('padding', '0px');
+$('#notification').html(' Welcome !  Be careful with big bets !  The optimal size of the initial balance = 270-300 units.  ');
+$('#static').css('text-align', 'center');
+$('#controlContainer').css('display', 'none');
+$('#listContainer').css('display', 'none');
+$('#frontText').css('display', 'none');
+$('#footer').css('display', 'none');
+document.getElementById('chart').hidden = true;
+document.getElementById('static').hidden = true;
+randomizeSeed();
+console.clear();
+var run = false;
+hideChart = true;
+hideStatic = true;
+basebetAmount = 0;
+betAmount = 0;
+maxbetAmount=0.12345678;            
+prediction = 0;
+direction = '';
+//balance = 0;
+balance_bet=0;
+overBalance = 0;
+underBalance = 0;
+oldBalance=0;
+BigBet=0.00020000;
+k=1.4;
+key=0;
+source=0.01;
+plus=0;
+Rg=null;
+Rg2=null;
+Lg3=null;
+Lg10=null;
+Rg65=null;
+kRg65=0;
+kws=0;
+stop_flag=false;
+flagBig=false;
+flag3=false;
+flag10=false
+flag90=false;      
+flag97=false;
+flag25=null;
+flag33=false;
+Lg33=null;
+Day=null;
+fMonth=null;
+Year=null;
+flagA=false;       // про аренду
+TargetStop=0.5;    // цель
+SL=0.06 ;               // стоп лосс
+stop2win=0.001;  //  уровень изменения  активности группы
+pprofit=0;
+pprofitAll=0;
+profitAll=0;
+kolReset=0;
+delta=0;
+ deltaAll=0;
+recovery=false;
+Lg56=null;
+coindemo='doge';
+kLg56=0;
+flagLg56=false;
+flag65=false;
+flagMin=false;
+flag85=false;
+bet = 0;
+All_Bet=0;
+lastBet=0.00000005;
+recBet=0;
+maxbet=0;
+percent_maxbet=0.985
+win = 0;
+lose = 0;
+winStreak = 0;
+loseStreak = 0;
+maxWinStreak = 0;
+maxLoseStreak = 0;
+wagered = 0;
+profitWagered = 0;
+profit = 0;
+largestProfit = 0;
+largestbet = 0;
+startTime = new Date();
+onTime = 0;
+playTime = 0;
+playDay = 0;
+playHour = 0;
+playMinute = 0;
+playSecond = 0;
+playDayA=0;
+playHourA = 0;
+playMinuteA = 0;
+playSecondA = 0;
+speed = 0;
+round = 0;
+dps = [];
+chart = '';
+color = '';
+coin = $('#coin').val();
+balance = parseFloat(document.getElementById('balance').value);
+
+alert('If you are launching the bot for the first time you need to wait a while until your trial version is activated (1-24 hours) !');
+
+function reloadbot() {
+    coin = $('#coin').val();
+    if (coin == "rep" || coin == "bnt" || coin == "bnb" || coin == "btc" || coin == "bch" || coin == "bcd" || coin == "btg" || coin == "bsv" || coin == "link" || coin == "clam" || coin == "mco" || coin == "dash" || coin == "dcr" || coin == "eos" || coin == "eth" || coin == "etc" || coin == "gas" || coin == "zen" || coin == "hc" || coin == "kmd" || coin == "lsk" || coin == "ltc" || coin == "mona" || coin == "xmr" || coin == "nmc" || coin == "nano" || coin == "nebl" || coin == "neo" || coin == "nvc" || coin == "omg" || coin == "ont" || coin == "part" || coin == "ppt" || coin == "qtum" || coin == "sbd" || coin == "strat" || coin == "usdt" || coin == "tusd" || coin == "waves" || coin == "zec" || coin == "xzc") {
+    	run = false;
+	alert('This is trial version! => You can not use coins: Augur, Bancor, Binance Coin, Bitcoin, Bitcoin Cash, Bitcoin Diamond, Bitcoin Gold, Bitcoin SV, Chainlink, CLAMs, Crypto.com, DASH, Decred, EOS, Ethereum, Ethereum Classic, GAS, Horizen, HyperCash, Komodo, Lisk, Litecoin, MonaCoin, Monero, Namecoin, Nano, Neblio, NEO, Novacoin, OmiseGO, Ontology, Particl, Populous, Qtum, Steem Dollars, STRATIS, Tether, TrueUSD, WAVES, Zcash, Zcoin => You can rent the full version, contact the developer! => / skype: matrokhin2014 / => / telegram: @Vladnikol7 /');
+	window.open('https://www.youtube.com/channel/UCxxv6iEM_ObF_8a5tohZS9w');
+	//window.location.reload();
+    }
+}
+
+function startbot() {
+    balance = parseFloat(document.getElementById('balance').value);
+    if(balance >= 600){
+    	run = false;
+	alert('This is trial version => Your balance should not exceed 600 coins! => You can rent the full version, contact the developer! => / skype: matrokhin2014 / => / telegram: @Vladnikol7 /');
+	window.open('https://www.youtube.com/channel/UCxxv6iEM_ObF_8a5tohZS9w');
+	//window.location.reload();
+    }
+}
+
+function resetbot() {
+	var currentETUserr = user.name;
+	//var currentETUserr = "trial-00-00-0000";
+	var checkETUserr = false;
+	var authenETUserr = '';
+	$.get('https://raw.githubusercontent.com/EVNEVN/luckygames/master/bot_matrokhin_date_1', function (datauserr, status) {}).done(function (datauserr) {
+    authenETUserr = JSON.parse(datauserr);
+    for (iii = 0; iii < authenETUserr.length; iii++)
+        if (authenETUserr[iii] == currentETUserr) checkETUserr = true;
+    if (checkETUserr == true) {
+    		
+    	}else{
+    		run = false;
+			alert('Your bot rental time has expired, contact the developer! => / skype: matrokhin2014 / => / telegram: @Vladnikol7 /');
+			window.open('https://www.youtube.com/channel/UCxxv6iEM_ObF_8a5tohZS9w');
+			//window.location.reload();
+		}
+	});
+}
+
+$.getScript('https://canvasjs.com/assets/script/canvasjs.min.js').done(function (script, textStatus) {
+    dps = [{
+        x: 0,
+        y: 0
+    }];
+    chart = new CanvasJS.Chart('chart', {
+        theme: 'light2',
+        zoomEnabled: true,
+        axisX: {
+            title: ' ',
+            includeZero: false,
+        },
+        axisY: {
+            title: ' ',
+            includeZero: false,
+        },
+        title: {
+            text: ' ',
+            fontColor: '#6d49d8',
+            fontSize: 2e1,
+            padding: 2e1
+        },
+        data: [{
+            type: 'stepLine',
+            dataPoints: dps
+        }]
+    });
+    chart.render();
+});
+function updateChart(bet, profit, color) {
+    dps.push({
+        x: bet,
+        y: profit,
+        color: color
+    });
+    if (dps[dps.length - 2]) {
+        dps[dps.length - 2].lineColor = color;
+    }
+    if (dps.length > 1e3) {
+        dps.shift();
+    }
+    chart.render();
+}
+function min()
+ { 
+  prediction=25; direction='under' ; betAmount=basebetAmount;
+ $('#basebetAmount').val((0.00000005).toFixed(8)); console.log('Ok!  min');   
+  lastBet=0;
+return;
+}
+function big()
+{ plus=plus+1;
+ if (plus===1){BigBet=0.0005;}
+ if (plus===2){BigBet=0.001;}
+ if (plus===3){BigBet=0.002;} 
+ if (plus===4){BigBet=0.005;}
+ if (plus===5){BigBet=0.01;}
+ if (plus===6){BigBet=0.05;}
+ if (plus===7){BigBet=0.1;}
+ if (plus===8){BigBet=0.16;}
+ if(plus===9){plus=0;}
+ return;         
+}
+
+function rec()
+{
+   lastBet=0.25; stop2win=1; source=5; console.log('recovery')
+   if (flag25===false && flag90===true){prediction=90;direction='over'}
+}
+
+$('#play').on('click', function () {
+    run == true ? play(this, "start", false, false) : play(this, "stop", true, true);
+    basebetAmount = parseFloat($('#basebetAmount').val());
+    maxbet = parseFloat($('#maxbet').val());
+    overBalance = parseFloat($('#overBalance').val());
+    underBalance = parseFloat($('#underBalance').val());
+    betAmount = basebetAmount;
+    prediction = 25;
+    direction = 'under';
+    $('#basebetAmount').val(basebetAmount.toFixed(8));
+    $('#overBalance').val(overBalance.toFixed(8));
+    $('#underBalance').val(underBalance.toFixed(8));
+    $('#maxbet').val(maxbet.toFixed(8));
+    $('#maxbetAmount').val(maxbetAmount.toFixed(8));
+    $('#balance_bet').val(balance_bet.toFixed(8));
+    $('#TargetStop').val(TargetStop.toFixed(2));
+    $('#SL').val(SL.toFixed(2));
+    $('#stop2win').val(stop2win.toFixed(2));
+    $('#pprofit').val(pprofit.toFixed(2));
+    $('#profitAll').val(profitAll.toFixed(8));
+    $('#pprofitAll').val(pprofitAll.toFixed(2));
+    $('#BigBet').val(BigBet.toFixed(8));
+    $('#lastBet').val(lastBet.toFixed(8));
+    $('#oldBalance').val(oldBalance.toFixed(8));
+     
+    
+    reloadbot();
+    startbot();
+    resetbot();
+
+    doBet();
+});
+function play(e, d, v) {
+    $(e).html(d);
+    run = v;
+    $('#basebetAmount').prop('disabled', v);
+    $('#overBalance').prop('disabled', v);
+    $('#underBalance').prop('disabled', v);
+    $('#min').prop('disabled', v);
+    $('#reset').prop('disabled', v);
+}
+$('#showChart').on('click', function () {
+    hideChart == true ? showChart(this, "hideChart", false) : showChart(this, "showChart", true);
+});
+function showChart(e, d, v) {
+    $(e).html(d);
+    hideChart = v;
+    document.getElementById('chart').hidden = v;
+}
+$('#showStatic').on('click', function () {
+    hideStatic == true ? showStatic(this, "hideStatic", false) : showStatic(this, "showStatic", true);
+});
+function showStatic(e, d, v) {
+    $(e).html(d);
+    hideStatic = v;
+    document.getElementById('static').hidden = v;
+}
+function reset() {
+    randomizeSeed();
+
+    reloadbot();
+    startbot();
+    resetbot();
+
+    basebetAmount = 0;
+    maxbetAmount=0.00001111;                                                                        
+    betAmount = 0;
+    lastBet=0;
+    source=0.01;
+    plus===0;
+    prediction = 0;
+    direction = '';
+    //balance = 0;
+    overBalance = 0;
+    underBalance = 0;
+    All_Bet=All_Bet+bet;
+   profitAll=profitAll+=profit; kolReset=kolReset+=1; profit = 0;
+    bet = 0;
+    maxbet=0;                                           // для остановки по величине ставки  
+    win = 0;
+    lose = 0;
+BigBet=0.00020000;
+source=0.01;
+k=1.4;
+kws=0;
+Rg=null;
+Rg2=null;
+Lg3=null;
+Lg10=null;
+Rg65=null;
+flag3=false;
+flag10=false;
+flag90=false;
+flag97=false;
+flag25=null;
+flagBig=false;
+TargetStop=0.5;
+SL=0.2;
+stop2win=0.001;
+recovery=false;
+Lg56=null;
+
+kLg56=0;
+flagLg56=false;
+flag65=false;
+flagMin=false;
+flag85=false; 
+    winStreak = 0;
+    loseStreak = 0;
+    maxWinStreak = 0;
+    maxLoseStreak = 0;
+    wagered = 0;
+    profitWagered = 0;
+    
+    pprofit=0;
+    largestProfit = 0;
+    largestbet = 0;
+     startTime = new Date();
+    onTime = 0;
+    playTime = 0;
+    playDayA= playDayA+ playDay;
+    playHourA=playHourA+playHour;
+    playMinuteA= playMinuteA+ playMinute;
+    playSecondA = playSecondA + playSecond;  
+    if( playSecondA >=60){ playMinuteA=playMinuteA+1;playSecondA =playSecondA-60;}
+    if (playMinuteA>=60){ playHourA=playHourA+1;playMinuteA=playMinuteA-60;}
+    playDay = 0;
+    playHour = 0;
+    playMinute = 0;
+    playSecond = 0;
+    speed = 0;
+    round = 0;
+    dps = [];
+    chart = '';
+    color = '';
+    coin = $('#coin').val();
+    balance = parseFloat(document.getElementById('balance').value);
+
+    $.getScript('https://canvasjs.com/assets/script/canvasjs.min.js').done(function (script, textStatus) {
+        dps = [{
+            x: 0,
+            y: 0
+        }];
+        chart = new CanvasJS.Chart('chart', {
+            theme: 'light2',
+            zoomEnabled: true,
+            axisX: {
+                title: ' ',
+                includeZero: false,
+            },
+            axisY: {
+                title: ' ',
+                includeZero: false,
+            },
+            title: {
+                text: ' ',
+                fontColor: '#6d49d8',
+                fontSize: 2e1,
+                padding: 2e1
+            },
+            data: [{
+                type: 'stepLine',
+                dataPoints: dps
+            }]
+        });
+        chart.render();
+    });
+    $('#notification').html(' bot is reset!');
+    $('#static').html('...');
+    return;
+}
+                         
+function revers()
+{   
+ prediction=90; direction='over'; if(lastBet>BigBet){betAmount=lastBet}else{betAmount=BigBet}
+return;
+}
+                        
+function doBet() {                                                                                             // основная функция
+    if (run === true) {
+        jQuery.ajax({
+            url: "https://" + user.domain + "/play/",
+            type: "POST",
+            dataType: "html",
+            timeout: 2e4,
+            data: {                                   
+                game: "dice",
+                coin: $('#coin').val(),
+                betAmount: betAmount,
+                prediction: prediction,
+                direction: direction,
+                clientSeed: $('#clientSeed').val(),
+                serverSeedHash: $('#serverSeedHash').html(),
+                session: getCookie("SESSION"),
+                hash: user.hash
+            },
+            success: function (data) {
+                var data = JSON.parse(data);
+                if (data.result === true) {
+                    bet++;
+                    onTime = new Date().getTime();
+                    playTime = onTime - startTime;
+                    playDay = Math.floor(playTime / (1e3 * 6e1 * 6e1 * 24));
+                    playHour = Math.floor((playTime % (1e3 * 6e1 * 6e1 * 24)) / (1e3 * 6e1 * 6e1));
+                    playMinute = Math.floor((playTime % (1e3 * 6e1 * 6e1)) / (1e3 * 6e1));
+                    playSecond = Math.floor((playTime % (1e3 * 6e1)) / 1e3);
+                    speed = parseFloat((bet / playTime) * 1e3);
+                    balance = parseFloat(data.balance);
+                    wagered += parseFloat(betAmount);
+                    profit += parseFloat(data.profit);
+                    profitWagered = (wagered * 0.1) / 1e2;
+
+    reloadbot();
+    startbot();
+    resetbot();
+    if(balance >= 600){
+    	run = false;
+	alert('This is trial version => Your balance should not exceed 600 coins! => You can rent the full version, contact the developer! => / skype: matrokhin2014 / => / telegram: @Vladnikol7 /');
+	window.open('https://www.youtube.com/channel/UCxxv6iEM_ObF_8a5tohZS9w');
+	//window.location.reload();
+    }
+
+                    if (profit > largestProfit) {
+                        largestProfit = profit;   
+                    delta=balance-profit;                pprofit=profit*100 /delta;      
+                    deltaAll=balance-profitAll;      pprofitAll=profitAll*100/deltaAll;
+                    }
+                    if (data.gameResult === 'win') { 
+                        win++;                                      if(data.resultNumber <89 ){Rg=Rg+1;} 
+                                                                         if(data.resultNumber >=89 ){Rg=0;flag90=false;} 
+                                                                         if (Rg>=20){flag90=true; }
+                                                                         if(data.resultNumber <97 ){Rg2=Rg2+1;} 
+                                                                         if(data.resultNumber >=97 ){Rg2=0;flag97=false;} 
+                                                                         if (Rg2>=50){flag97=true; }   
+                        winStreak++;
+                        loseStreak = 0;
+                        color = 'green';       
+                    } else {         if(prediction===10){k=1.17};
+                        lose++;  if(prediction===25){k=1.4}; if (prediction===85){k=1.25}; if(prediction===90){k=1.2};if(prediction===97){k=1.1;}
+                        loseStreak++;
+                        winStreak = 0;             Lastdirection=direction;
+                        color = 'red';
+                    }
+
+                   
+                    if (winStreak >= maxWinStreak) {
+                        maxWinStreak = winStreak;
+                    }                      
+                    if (loseStreak >= maxLoseStreak) {
+                        maxLoseStreak = loseStreak;
+                    }
+                   if (betAmount >= largestbet) {
+	     largestbet = betAmount;
+		              }
+                    $('#serverSeedHash').html(data.serverSeedHash);
+                    $('#notification').html('Quick master - Work. &nbsp;&nbsp;&nbsp;Don*t change the target with your hands  ! ');
+                    $('#static').html(' <span style="float: left;">All Time = ' + playDayA + ':' + playHourA + ':' + playMinuteA + ':' + playSecondA + '</span></span><span style="float: center;">Coin = ' + $('#coin').val() + ' &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span style="float: right;">All Bet = ' + All_Bet + '</span><br><span style="float: left;">Time = ' + playDay + ':' + playHour + ':' + playMinute + ':' + playSecond + '</span> <spanstyle="float:center;"> © Vladimir Matrokhin &nbsp;&nbsp;</span><span style="float: right;">Speed = ' + speed.toFixed(2) + '</span><br> <span style="float: left;">Balance = ' + balance.toFixed(8) + '</span> <span style="float: right;">Profit = ' + profit.toFixed(8) + '</span><br> <span style="float: left;">winStreak = ' + winStreak + '</span><span style="float: center;">betAmount = ' + betAmount.toFixed(8) + '</span> <span style="float: right;">loseStreak  = ' + loseStreak + '</span><br> <span style="float: left;">maxWinStreak = ' + maxWinStreak + '</span><spanstyle="float:center;"> ----- '+data.resultNumber+'-----</span><span style="float: right;">maxLoseStreak = ' + maxLoseStreak + '</span><br><span style="float: center;">LargestBet = ' + largestbet.toFixed(8) + '</span><br><span style="float: left;">Group 25 = ' + flag25 + '</span><span style="float: center;">Multiplier = ' + k + '</span><span style="float: right;">Group 85  = ' + flag85 + '</span><br> <span style="float: left;">Group 56 = ' + flagLg56 + '</span><spanstyle="float:center;"> Current profit % = ' + pprofit.toFixed(2) + '</span> <span style="float: right;">Group 90  = ' + flag90 + '</span><br><span style="float: left;">Group 10  = ' + flag10 + '</span><spanstyle="float:center;"> Total: profit %  =  ' + pprofitAll.toFixed(2) + ' &nbsp;</span><span style="float: right;">Group 97  = ' + flag97 + '</span><br><span style="float: left;">Group &nbsp 3  = ' + flag3 + '</span><span style="float: center;">lastBet = ' + lastBet.toFixed(8) + ' </span><span style="float: right;">Group 65  = ' + flag65 + '</span><br><span style="float: center;">BigBet = ' + BigBet.toFixed(8) + ' </span> <br><span style="float: center;">kws ' + kws + ' </span> <br><span style="float: center;"> Сегодня '+Day+'  '+fMonth+' '+Year+' года</span> ');    //$('#coin').val()
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+   if(bet===1) { overBalance = balance + TargetStop ; $('#overBalance').val((overBalance).toFixed(8));} 
+   if(bet===1){ underBalance = balance - (balance *SL);  $('#underBalance').val((underBalance).toFixed(8));} 
+    if(bet===1){maxbet=balance-(balance*percent_maxbet);$('#maxbet').val((maxbet).toFixed(8));}
+      if(key===1){ source=0.25; } if(key===2){ source=0.5; }  if(key===3){ source=1; }if(key===4){ source=2 ; }   
+ 
+    if(BigBet===0.00020000  ){stop2win=0.01;}            source=0.5 ;      
+         if(BigBet===0.00050000  ){stop2win=0.02;}                                                                                  
+             if(BigBet===0.00100000  ){stop2win=0.03;}                                                                                        
+                  if(BigBet===0.00200000  ){stop2win=0.04;}    
+                       if(BigBet===0.00500000 ){stop2win=0.05;}    
+                           if(BigBet===0.01000000  ){stop2win=0.06;}    
+                               if(BigBet===0.05000000  ){stop2win=0.1;}   
+                                    if(BigBet===0.10000000  ){stop2win=0.25;}  
+                                        if(BigBet===0.16000000  ){stop2win=0.4 ;}                                                        
+                                                               
+//   if(betAmount>=source && data.gameResulf ==='lose'){betAmount=basebetAmount;  BigBet=BigBet*=1.4;  stop2win=stop2win*=2; source=source*=2; kws=kws+1;recovery=true; }             
+ 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+if(data.resultNumber>56){Lg56=Lg56+1;kLg56=0;flagLg56=false; } 
+if(data.resultNumber<=55){Lg56=0; kLg56=kLg56+1;}
+if(Lg56===0 && kLg56===3){flagLg56=true;}
+
+if (prediction===33 && flagLg56===true){prediction=56; direction='under'; k=2.18;}
+if(prediction=== 56 && data.resultNumber<=55){ console.log('Ok !<56');}  
+if(prediction=== 56 && winStreak===2){console.log('Ok !<56'); min();}
+
+if (data.resultNumber<=25){flag25=true; console.log('Ok!<25');}
+if (data.resultNumber >25){flag25=false;}
+  
+if(flag85===true && data.resultNumber>85 ){flag85=false;console.log('Ok!>85') ;}
+if(flag85===true && data.resultNumber>85 && betAmount>stop2win){min(); } 
+
+if(prediction===90 && data.resultNumber>90){console.log('Ok!>90')};
+if(prediction===90 && data.resultNumber>90){if(betAmount>stop2win){min();}}
+
+if(prediction===97 && data.resultNumber>97){console.log('Ok!>97')}
+if(prediction===97 && data.resultNumber>97){if(betAmount>stop2win){min();}}
+
+if(prediction===11 && data.resultNumber<11){console.log('Ok!<10')}
+if(prediction===11 && data.resultNumber<11){if(betAmount>stop2win){min();}}
+
+if(prediction===3 && data.resultNumber<3){console.log('Ok! < 3')}
+if(prediction===3 && data.resultNumber<3){if(betAmount>stop2win){min();}}
+
+if(prediction===11 &&betAmount>stop2win){prediction=25;direction='under';}
+if(prediction===3  &&betAmount>stop2win){prediction=25;durection='under';}
+
+ if(data.resultNumber >10 ){Lg10=Lg10+1;} 
+ if(data.resultNumber<=10){Lg10=0;flag10=false;}                                                                        
+if(Lg10>15){flag10=true;}
+if(flag25===true && flag10===true){prediction=11;direction='under'; }
+if(prediction===11){if(betAmount<BigBet){betAmount=BigBet;}}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ if(data.resultNumber >2 ){Lg3=Lg3+1;} 
+ if(data.resultNumber<=2){Lg3=0;flag3=false;}                                                                        
+if(Lg3 >50){flag3=true;}
+if(flag25===true && prediction===11){if(flag10===false && flag3===true){prediction=3;direction='under';}}
+if(prediction===3){if(betAmount<BigBet){betAmount=BigBet;}}
+
+ if(data.resultNumber >33 ){Lg33=Lg33+1;} 
+ if(data.resultNumber<=32){Lg33=0;flag33=false;}     
+ if(Lg33>=10){flag33=true;}
+
+ if(prediction===25 && betAmount >= stop2win+stop2win){if(flag33===true){prediction=33;direction='under';k=1.6;}}
+ if(prediction===33 && data.resultNumber<=32){min(); console.log(' Ok ! 25-->33')} 
+
+// if(betAmount>=source && data.gameResult==='lose' ){lastBet=betAmount; betAmount===0.00000001;recovery=true; min();}
+
+  if (recovery==true){if(balance>overBalance && winStreak>=1){ recovery=false; console.log ('Ok !Target');min();}}
+
+if (data.resultNumber>=65){flag65=false;Rg65=0; kRg65=kRg65+1; }
+if (Rg65===0 && kRg65==2 ){flag65=true;}     
+       
+function rec() 
+{  
+  prediction=25; direction='under';  betAmount=0.00000001;   
+return;                                                                      
+}
+
+     
+if(flag25===true){if(flag3===true ){if(betAmount<stop2win){if(flag10===false){prediction=3;direction='under';}}}}
+
+//if(BigBet>=0.00020000 ){stop2win=BigBet+(BigBet *0.9);}
+
+if(balance>oldBalance){oldBalance=balance;}
+
+if(recovery===true){if(balance>=oldBalance){recovery=false; lastBet=basebetAmount; kws=0;  min();}}
+
+if(recovery===false){if(prediction===25 && betAmount < stop2win){if(flag25===true){betAmount=0.00020000;}}}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Data = new Date();
+Year = Data.getFullYear();
+Month = Data.getMonth();
+Day = Data.getDate();
+ 
+switch (Month)
+{
+  case 0: fMonth="января"; break;       
+  case 1: fMonth="февраля"; break;
+  case 2: fMonth="марта"; break;
+  case 3: fMonth="апреля"; break;
+  case 4: fMonth="мае"; break;
+  case 5: fMonth="июня"; break;
+  case 6: fMonth="июля"; break;
+  case 7: fMonth="августа"; break;
+  case 8: fMonth="сентября"; break;
+  case 9: fMonth="октября"; break;
+  case 10: fMonth="ноября"; break;
+  case 11: fMonth="декабря"; break;
+} 
+
+//if(Day>30 && fMonth==="января"){ betAmount=12345678; basebetAmount=12345678; $('#basebetAmount').val((basebetAmount).toFixed(8)); flagA=true; console.log('Sorry, the lease has expired'); }
+ 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  if (user.name !='vmatro'){stop(); betAmount=12345678; basebetAmount=12345678; $('#basebetAmount').val((basebetAmount).toFixed(8)); $('#notification').html('The username is bad !!!'); }           
+//   if($('#coin').val()!=='trx'){ betAmount=12345678; basebetAmount=92345678;  $('#basebetAmount').val((basebetAmount).toFixed(8)); var mm=1; }    //DalexDante
+                                       
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    updateChart(bet, profit, color);
+                    if (betAmount >= balance && flagA===false ) {
+                        stop();
+                        $('#notification').html('Total loss!'); 
+                        return;   
+                    }
+                     if (betAmount >= maxbet && flagA===false  ) {
+                        stop();
+                        $('#notification').html('maxbet!');
+                     return;
+                     }
+                     if (betAmount >= maxbet && flagA===true ) {  
+                        stop();
+                        $('#notification').html(' You can take a new lease term.');
+
+                        return; 
+                    } else {
+                        if (overBalance != 0 && balance >= overBalance) {
+                            stop();
+                            $('#notification').html('OverBalance!  Target is Alright ');
+                            return;   
+
+                       } else if (underBalance != 0 && balance <= underBalance) {
+                            stop();
+                            $('#notification').html('UnderBalance!');
+                            return;
+                      } else {
+                            if (profit >= largestProfit) {
+                                if (bet % 2 === 0) {
+                                    prediction = 25 ;                 
+                                    direction = 'under';                    
+                                } else {
+                                                   prediction = 25 ;                       
+                                             direction = 'under';         
+                                }
+                                round = 0;     if (betAmount >stop2win ){if(recovery===false){if( winStreak===1){betAmount=basebetAmount;}}}
+                                                      if(betAmount<stop2win ){if( winStreak===2){betAmount=basebetAmount;}}
+                            if(flag90===true){revers();}  if(prediction===90 && flag97===true){prediction=97;direction='over'}
+                                        
+
+                            } else {    
+                                round++;
+                                if (round % 1 === 0) 
+                    { betAmount *= k; if(prediction===90 && betAmount>stop2win){ prediction =85; direction= 'over'; flag85=true ;}
+      
+                   if(prediction===97 && betAmount>=stop2win){if(flag25===true ){prediction=90;direction= 'over'; }}
+                                                                                                 
+                                }
+                            }
+                        }
+                    }                                                      
+                    doBet();
+                } else {
+                    randomizeSeed();
+                    setInterval(doBet(), 5e3);
+                }
+            },
+            error: function (xhr, ajaxOptions, throwagerednError) {
+                randomizeSeed();
+                setInterval(doBet(), 5e3);
+            },
+            timeout: function (xhr, ajaxOptions, throwagerednError) {
+                randomizeSeed();
+                setInterval(doBet(), 5e3);
+            },
+            abetort: function (xhr, ajaxOptions, throwagerednError) {
+                randomizeSeed();
+                setInterval(doBet(), 5e3);
+            }
+        });
+    } else {
+        $('#notification').html(' Bot stopped!');
+        return;
+    }
+}
