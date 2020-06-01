@@ -1,1 +1,0 @@
-function SoundJakePot() { window.audio = {}; audio["alert"] = new Audio(); audio["alert"].src = "https://cdn.rawgit.com/maxicoin/dice/master/sound/alert_police_alarm.mp3"; window.audio["alert"].play(); return false; } $('#ChatTab > p').bind('DOMSubtreeModified', SoundJakePot);
