@@ -1,382 +1,201 @@
---
--- Created by IntelliJ IDEA.
--- User: luan
--- Date: 5/27/20
--- Time: 6:32 PM
--- To change this template use File | Settings | File Templates.
---
+-- Wager
+----------------------
 
-local allVariable = {
-    bet         = 0.001,
-    form        = 5,
-    to          = 95,
-    tableChance = {},
-    typeBet     = {
-        hi = true,
-        low = false
-    },
-    target = balance * 10,
-    countBet = 0,
-    bigerBalance = 0,
-    balancelose = 0,
-    flagGo = false
-};
+minBaseBet = 0.00000001 -- min base bet
+maxBaseBet = 0.00000001 -- max base bet
+  
+maxBet = 1000000 -- max bet
 
-chance = 50
-bethigh = true
-nextbet = allVariable.bet
+minChanceWin = 50 -- min chance win
+maxChanceWin = 98 -- max chance win
+  
+minChanceLoss = 50 -- min chance loss
+maxChanceLoss = 98 -- max chance loss
 
-function getPayout(chag)
-    local py = 100 / tonumber(chag)
-    py = py - (py * (1 / 100))
-    return py;
+lossPerc = 1.00 -- permission loss, %
+
+wager = 0 -- 0-wager, 1-wagerprofit
+
+recover = 0 -- 0-auto, 1-multipliers
+autoRecDiv = 2.00 -- auto recover divider
+multBetWin = 1.00 -- multiplier bet win
+multBetLoss = 2.00 -- multiplier bet loss
+
+stopBetOver = 1000000 -- stop if bet over
+balanceRisk = 100 -- balance risk, %
+stopLossAmount = 1000000 -- stop if loss amount
+balanceUnder = 0.00000001 -- stop if balance under
+targetProfit = 1000000 -- stop target profit
+targetBalance = 1000000 -- stop target balance
+
+setlowhigh = 0 -- 0-low, 1-high, 2-random, 3-random on win, 4-random on profit +
+
+----------------------------
+
+basebet = math.random(minBaseBet*100000000,maxBaseBet*100000000)/100000000;
+nextbet = basebet;
+chance = math.random(minChanceWin*100,maxChanceWin*100)/100;
+casino = 1.00; -- House Edge
+pay = (100-casino)/chance;
+lastbalance = balance;
+startbalance = balance;
+stoplevel = 0;
+
+if setlowhigh == 0 then
+bethigh=false
+end
+if setlowhigh == 1 then
+bethigh=true
+end
+if setlowhigh == 2 then
+r=math.random(1,2)
+if r == 1 then
+bethigh=true
+else
+bethigh=false
+end
+end
+if setlowhigh == 3 then
+r=math.random(1,2)
+if r == 1 then
+bethigh=true
+else
+bethigh=false
+end
+end
+if setlowhigh == 4 then
+r=math.random(1,2)
+if r == 1 then
+bethigh=true
+else
+bethigh=false
+end
 end
 
-function createChange()
-    for i = allVariable.form, allVariable.to, 1 do
-        i = string.format("%.2f", i)
-        local py = tonumber(string.format("%.4f", getPayout(i)))
-        allVariable.tableChance[tonumber(i)] = {};
-        for hiLow, val in pairs(allVariable.typeBet) do
-            allVariable.tableChance[tonumber(i)][hiLow] = {};
-            allVariable.tableChance[tonumber(i)][hiLow] = {
-                lose = 0,
-                onlose = 1 / (py - 1) * 100,
-                onwin = {
-                    count = 0,
-                    tile = 0
-                },
-                bet = allVariable.bet,
-                py = py,
-                bethigh = val,
-                chance = tonumber(i),
-                tilethang = 0
-            }
-            if tonumber(i) <= 15 then
-                allVariable.tableChance[tonumber(i)][hiLow].risk = math.ceil((py * 10) + ((py * 30) * 20 / 100))
-            elseif tonumber(i) > 15 and tonumber(i) < 30 then
-                allVariable.tableChance[tonumber(i)][hiLow].risk = math.ceil((py * 10) + 20)
-            else
-                allVariable.tableChance[tonumber(i)][hiLow].risk = math.ceil((py * 10) + ((py * 20) * 20 / 100))
-            end
-            if val == true then
-                allVariable.tableChance[tonumber(i)][hiLow].game = string.format("%.2f", (100 - i - 0.01))
-            else
-                allVariable.tableChance[tonumber(i)][hiLow].game = string.format("%.2f", i)
-            end
-        end
-    end
-end
+---------------------------
 
-createChange()
+function dobet() 
 
-function resetBet()
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            value[hiLow].lose = 0
-            value[hiLow].bet = allVariable.bet
-            value[hiLow].onwin.count = 0
-            value[hiLow].onwin.tile = 0
-            value[hiLow].onwin.tilethang = 0
-        end
-    end
-end
+	if setlowhigh == 0 then
+		bethigh=false
+	end
+	if setlowhigh == 1 then
+		bethigh=true
+	end
+	if setlowhigh == 2 then
+		r=math.random(1,2)
+		if r == 1 then
+			bethigh=true
+		else
+			bethigh=false
+		end
+	end
 
-function getCurBet(value, hiLow)
-    local currentBet = allVariable.bigerBalance / value[hiLow].py
-    for i = 1, value[hiLow].risk, 1 do
-        currentBet = currentBet / ((value[hiLow].onlose / 100) + 1)
-    end
-    if currentBet > balance then
-        currentBet = allVariable.bet
-    else
-        if currentBet < allVariable.bet then
-            currentBet = allVariable.bet
-        end
-    end
-    return currentBet
-end
+	if (win) then
+		if setlowhigh == 3 then
+			r=math.random(1,2)
+			if r == 1 then
+				bethigh=true
+			else
+				bethigh=false
+			end
+		end
+	end
 
-function getMutiBet(value, hiLow)
-    local currentBet = allVariable.bigerBalance / value[hiLow].py
-    local risk = value[hiLow].risk - value[hiLow].lose
-    for i = 1, risk, 1 do
-        currentBet = currentBet / ((value[hiLow].onlose / 100) + 1)
-    end
-    if currentBet < allVariable.bet then
-        currentBet = allVariable.bet
-    end
-    return currentBet
-end
+	if balance >= lastbalance then
+		lastbalance = balance;
+			if setlowhigh == 4 then
+				r=math.random(1,2)
+				if r == 1 then
+					bethigh=true
+				else
+					bethigh=false
+				end
+			end
+	end
+		
+	if wager == 0 then
+		if ((100*(startbalance-balance)/balance) <= lossPerc) then
+			chance = math.random(minChanceWin*100,maxChanceWin*100)/100;
+			basebet = math.random(minBaseBet*100000000,maxBaseBet*100000000)/100000000;
+			nextbet = basebet;
+		else
+			chance = math.random(minChanceLoss*100,maxChanceLoss*100)/100;
+			if recover == 0 then
+				pay = (100-casino)/chance;
+				nextbet = ((startbalance-balance+basebet)/(pay-1))/autoRecDiv;
+			end
+			if recover == 1 then
+				if (win) then
+					nextbet *= multBetWin;
+				else
+					nextbet *= multBetLoss;
+				end
+			end
+		end
+	end
 
-function updateBet()
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            if val then
-                if tonumber(lastBet.roll) > tonumber(value[hiLow].game) then
-                    value[hiLow].onwin.count = value[hiLow].onwin.count + 1
-                    value[hiLow].onwin.tile = value[hiLow].onwin.tile + (value[hiLow].lose / value[hiLow].risk * 100)
-                    value[hiLow].lose = 0
-                    value[hiLow].bet = getCurBet(value, hiLow)
-                    value[hiLow].tilethang = 0
-                else
-                    if value[hiLow].lose > 0 then
-                        if key == lastBet.chance then
-                            value[hiLow].bet = value[hiLow].bet + (value[hiLow].bet * value[hiLow].onlose / 100)
-                        else
-                            value[hiLow].bet = getMutiBet(value, hiLow)
-                        end
---                        value[hiLow].bet = getMutiBet(value, hiLow)
-                    end
-                    value[hiLow].tilethang = value[hiLow].lose / value[hiLow].risk * 100
-                    value[hiLow].lose = value[hiLow].lose + 1
-                end
-            else
-                if tonumber(lastBet.roll) < tonumber(value[hiLow].game) then
-                    value[hiLow].onwin.count = value[hiLow].onwin.count + 1
-                    value[hiLow].onwin.tile = value[hiLow].onwin.tile + (value[hiLow].lose / value[hiLow].risk * 100)
-                    value[hiLow].lose = 0
-                    value[hiLow].bet = getCurBet(value, hiLow)
-                    value[hiLow].tilethang = 0
-                else
-                    if value[hiLow].lose > 0 then
-                        if key == lastBet.chance then
-                            value[hiLow].bet = value[hiLow].bet + (value[hiLow].bet * value[hiLow].onlose / 100)
-                        else
-                            value[hiLow].bet = getMutiBet(value, hiLow)
-                        end
---                        value[hiLow].bet = getMutiBet(value, hiLow)
-                    end
-                    value[hiLow].tilethang = value[hiLow].lose / value[hiLow].risk * 100
-                    value[hiLow].lose = value[hiLow].lose + 1
-                end
-            end
-        end
-    end
-end
+	if wager == 1 then
+		if((100*(lastbalance-balance)/balance) <= lossPerc) then 
+			chance = math.random(minChanceWin*100,maxChanceWin*100)/100;
+			basebet = math.random(minBaseBet*100000000,maxBaseBet*100000000)/100000000;
+			nextbet = basebet;
+		else
+			chance = math.random(minChanceLoss*100,maxChanceLoss*100)/100;
+			if recover == 0 then
+				pay = (100-casino)/chance;
+				nextbet = ((lastbalance-balance+basebet)/(pay-1))/autoRecDiv;
+			end
+			if recover == 1 then
+				if (win) then
+					nextbet *= multBetWin;
+				else
+					nextbet *= multBetLoss;
+				end
+			end
+		end
+	end
+	
+--------------------------------
 
-function tacticOne()
-    local phantram = 100
-    local up
-    local down
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            up = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) + 10
-            down = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) - 10
-            local cbet = value[hiLow].risk - value[hiLow].lose
-            local pt = cbet / value[hiLow].risk * 100
-            if pt < phantram and (pt >= up or pt <= down) then
-                phantram = pt
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
+	if nextbet < basebet then nextbet = basebet end
+	if nextbet > maxBet then nextbet = maxBet end
+	
+	
+	  if (nextbet > balance) then
+        print("Insufficient funds " ..balance);
+        stop();
+      end
 
-function tacticTwo()
-    local phantram = 100
-    local up
-    local down
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            up = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) + 30
-            down = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) - 30
-            local cbet = value[hiLow].risk - value[hiLow].lose
-            local pt = cbet / value[hiLow].risk * 100
-            if pt < phantram and (pt <= up and pt >= down) then
-                phantram = pt
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
+	  if (nextbet > stopBetOver) then
+        print("Stop Bet Over " ..nextbet);
+        stop();
+      end
+	  
+	  stoplevel = (100-balanceRisk)*lastbalance/100;
+	  if (balance - nextbet < stoplevel) then
+        print("Balance Risk " ..balance);
+        stop();
+      end
+	  
+	  if (lastbalance - balance >= stopLossAmount) then
+        print("Stop Loss Amount " ..(lastbalance - balance));
+        stop();
+      end
 
-function tacticThree()
-    local phantram = 100
-    local up
-    local down
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            up = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) + 20
-            down = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) - 20
-            local cbet = value[hiLow].risk - value[hiLow].lose
-            local pt = cbet / value[hiLow].risk * 100
-            if pt < phantram and (pt >= up or pt <= down) then
-                phantram = pt
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
-
-function tacticFour()
-    local phantram = 100
-    local up
-    local down
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            up = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) + 30
-            down = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) - 30
-            local cbet = value[hiLow].risk - value[hiLow].lose
-            local pt = cbet / value[hiLow].risk * 100
-            if pt < phantram and (pt <= up and pt >= down) then
-                phantram = pt
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
-
-function tacticFive()
-    local phamtram = 0
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            if value[hiLow].tilethang > phamtram and value[hiLow].tilethang < 50 then
-                phamtram = value[hiLow].tilethang
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
-
-function tacticSix()
-    local phamtram = 0
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            if value[hiLow].tilethang > phamtram and value[hiLow].tilethang < 70 and value[hiLow].tilethang > 10 then
-                phamtram = value[hiLow].tilethang
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
-
-function tacticSeven()
-    local phantram = 0
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            if value[hiLow].tilethang < 90 and value[hiLow].tilethang > phantram then
-                phantram = value[hiLow].tilethang
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
-
-function taticGo()
-    local phantram = 0
-    local up
-    local down
-    local _bet
-    for key, value in pairs(allVariable.tableChance) do
-        for hiLow, val in pairs(allVariable.typeBet) do
-            up = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) + 20
-            down = 100 - (value[hiLow].onwin.tile / value[hiLow].onwin.count) - 20
-            if value[hiLow].tilethang > phantram and (value[hiLow].tilethang > up or value[hiLow].tilethang < down) then
-                phantram = value[hiLow].tilethang
-                _bet = value[hiLow]
-            end
-        end
-    end
-    return _bet
-end
-
-function getBet()
-    local _bet
-    local profitPersen = profit / allVariable.bigerBalance * 100
-    if allVariable.countBet >= 10000 and profitPersen > 20 then
-        print('reset count')
-        allVariable.countBet = 0
-    elseif allVariable.countBet >= 10000 and profitPersen < 20 then
-        print('reset seed')
-        allVariable.countBet = 0
-        resetseed()
-        resetBet()
-    elseif allVariable.countBet >= 9000 and profitPersen < 90 then
-        print('p7')
-        _bet = tacticSeven()
-    elseif allVariable.countBet >= 7000 and profitPersen < 80 then
-        print('p6')
-        _bet = tacticSix()
-    elseif allVariable.countBet >= 6000 and profitPersen < 60 then
-        print('p5')
-        _bet = tacticFive()
-    elseif allVariable.countBet >= 4000 and profitPersen < 40 then
-        print('p4')
-        _bet = tacticFour()
-    elseif allVariable.countBet >= 2000 and profitPersen < 20 then
-        print('p3')
-        _bet = tacticThree()
-    elseif profitPersen > 5 and profitPersen < 10 then
-        print('p2')
-        _bet = tacticTwo()
-    else
-        print('p1')
-        _bet = tacticOne()
-    end
-    if _bet ~= nil then
-        allVariable.flagGo = false
-        chance = _bet.chance
-        bethigh = _bet.bethigh
-        nextbet = _bet.bet
-    else
-        if allVariable.balancelose < 0 then
-            allVariable.flagGo = true
-            _bet = taticGo()
-            if _bet ~= nil then
-                local placeBet = math.abs(allVariable.balancelose) / (_bet.py - 1)
-                if placeBet < allVariable.bet then
-                    placeBet = allVariable.bet
-                end
-                if placeBet > balance then
-                    placeBet = allVariable.bet
-                end
-                chance = _bet.chance
-                bethigh = _bet.bethigh
-                nextbet = placeBet
-            else
-                chance = math.random(5, 95)
-                bethigh = math.random(0, 100) % 2 == 0
-                nextbet = allVariable.bet
-            end
-        else
-            chance = math.random(5, 95)
-            bethigh = math.random(0, 100) % 2 == 0
-            nextbet = allVariable.bet
-        end
-    end
-end
-
-function dobet()
-    if balance >= allVariable.target then
-        stop()
-    end
-    if win then
-        if allVariable.flagGo == true then
-            allVariable.balancelose = allVariable.balancelose + currentprofit
-        end
-    else
-        allVariable.balancelose = allVariable.balancelose + currentprofit
-    end
---    allVariable.balancelose = allVariable.balancelose + currentprofit
-    allVariable.countBet = allVariable.countBet + 1
-    if balance > allVariable.bigerBalance then
-        allVariable.bigerBalance = balance
-    end
-    updateBet()
-    getBet()
+	  if (balance < balanceUnder) then
+        print("Stop Balance Under " ..balance);
+        stop();
+      end
+	  
+	  if (profit >= targetProfit) then
+			print('Target Profit ' ..profit);
+			stop();
+	  end
+	  
+	  if (balance >= targetBalance) then
+			print('Target Balance ' ..balance);
+			stop();
+	  end
+	  
 end
