@@ -1,506 +1,201 @@
-// Bot Wolf Lua
+-- Wager
+----------------------
 
-/*
-const BOT_URL = 'https://evnauthreferrals.000webhostapp.com/WebDiceBot';  
-var script = document.createElement('script'); 
-script.type = 'text/javascript'; 
-script.src = BOT_URL + '/js/bot/wolf.js'; 
-document.body.appendChild(script);
-*/
+minBaseBet = 0.00000001 -- min base bet
+maxBaseBet = 0.00000010 -- max base bet
+  
+maxBet = 1000000 -- max bet
 
-var coin = 'trx'; // Play Coin - btc,eth,ltc,doge,bch,xrp,trx,eos,brl,cad
+minChanceWin = 50 -- min chance win
+maxChanceWin = 98 -- max chance win
+  
+minChanceLoss = 49.5 -- min chance loss
+maxChanceLoss = 52 -- max chance loss
 
+lossPerc = 0.001 -- permission loss, %
 
-const BOT_URL = 'https://evnauthreferrals.000webhostapp.com/WebDiceBot';
+wager = 1 -- 0-wager, 1-wagerprofit
 
-function addJs(src, cb) {
-    var s = document.createElement('script');
-    s.type = 'text/javascript';
-    s.src = src;
-    s.onload = cb;
-    document.head.appendChild(s);
-}
+recover = 0 -- 0-auto, 1-multipliers
+autoRecDiv = 2.00 -- auto recover divider
+multBetWin = 1.00 -- multiplier bet win
+multBetLoss = 2.00 -- multiplier bet loss
 
-function addCss(src, cb) {
-    var s = document.createElement('link');
-    s.rel = 'stylesheet';
-    s.href = src;
-    s.onload = cb;
-    document.head.appendChild(s);
-}
-	
-var bot = `<div id="botBody" class="bot-body">
-    <div class="bot-body-top">
-        <div class="bot-div-chart">
-            <div id="botChart"></div>
-        </div>
-        <div class="bot-div-code">
-            <textarea id="botCode">-- simple code
-chance=49.5
-basebet=0.00000001
-nextbet=basebet
+stopBetOver = 1000000 -- stop if bet over
+balanceRisk = 100 -- balance risk, %
+stopLossAmount = 1000000 -- stop if loss amount
+balanceUnder = 0.00000001 -- stop if balance under
+targetProfit = 1000000 -- stop target profit
+targetBalance = 1000000 -- stop target balance
+
+setlowhigh = 2 -- 0-low, 1-high, 2-random, 3-random on win, 4-random on profit +
+
+----------------------------
+
+basebet = math.random(minBaseBet*100000000,maxBaseBet*100000000)/100000000;
+nextbet = basebet;
+chance = math.random(minChanceWin*100,maxChanceWin*100)/100;
+casino = 1.00; -- House Edge
+pay = (100-casino)/chance;
+lastbalance = balance;
+startbalance = balance;
+stoplevel = 0;
+
+if setlowhigh == 0 then
+bethigh=false
+end
+if setlowhigh == 1 then
 bethigh=true
+end
+if setlowhigh == 2 then
+r=math.random(1,2)
+if r == 1 then
+bethigh=true
+else
+bethigh=false
+end
+end
+if setlowhigh == 3 then
+r=math.random(1,2)
+if r == 1 then
+bethigh=true
+else
+bethigh=false
+end
+end
+if setlowhigh == 4 then
+r=math.random(1,2)
+if r == 1 then
+bethigh=true
+else
+bethigh=false
+end
+end
 
-function dobet()
-    if win then
-        nextbet=basebet
-    else
-        nextbet=previousbet*2
-    end
-end</textarea>
-        </div>
-    </div>
-    <div class="bot-clear-float"></div>
-    <div class="bot-body-bottom">
-        <div class="bot-div-control">
-            <span onclick="start()">Start</span>
-            <span onclick="stop()">Stop</span>
-            <span onclick="continueBet()">Continute</span>
-            <span onclick="stopOnWin()">Stop On Win</span>
-            <span onclick="resetStats()">Reset Stats</span>
-            <span onclick="resetChart()">Reset Chart</span>
-            <span onclick="resetSeed()">Reset Seed</span>
-            <span onclick="donation()">Donate</span>
-        </div>
-        <hr>
-        <table>
-            <thead>
-                <th>Run Time</th>
-                <th>Coin</th>
-                <th>Balance</th>
-                <th>Profit</th>
-                <th>Bets</th>
-                <th>Wins</th>
-                <th>Losses</th>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><span id="botRunTime">?</span></td>
-                    <td><span id="botCoin">?</span></td>
-                    <td><span id="botBalance">?</span></td>
-                    <td><span id="botProfit">?</span></td>
-                    <td><span id="botBets">?</span></td>
-                    <td><span id="botWins">?</span></td>
-                    <td><span id="botLosses">?</span></td>
-                </tr>
-            </tbody>
-        </table>
-        <hr>
-        <table>
-            <thead>
-                <th>Amount</th>
-                <th>Target</th>
-                <th>Result</th>
-                <th>Profit</th>
-            </thead>
-            <tbody id="botHistory"></tbody>
-        </table>
-    </div>
-</div>
-<img class="bot-toggle" src="${BOT_URL}/bot.png" onclick="botToggle()" />`;
+---------------------------
 
-var
-client = '',
-show = true,
-startTime = new Date(),
-playTime = 0,
-playDays = 0,
-playHours = 0,
-playMinutes = 0,
-playSeconds = 0,
-dps = [],
-chart = '',
-betsChart = 0,
-profitChart = 0,
-run = true,
-win = true,
-sOW = false,
-nextBet = 0,
-chance = 0,
-betHigh = true,
-bets = 0,
-wins = 0,
-losses = 0,
-balance = 0,
-profit = 0,
-currentProfit = 0,
-winStreak = 0,
-loseStreak = 0,
-currentStreak = 0,
-previousBet = 0,
-lastBet = {
-    roll: 0,
-    chance: 0
-};
-var cur_nonce = '';
-var checkStartBalance = true;
-var cur_data = '';
-//var coin = JSON.parse(localStorage.getItem('v2_currency')).currency; // На виртуальном сервере не работает
+function dobet() 
 
+	if setlowhigh == 0 then
+		bethigh=false
+	end
+	if setlowhigh == 1 then
+		bethigh=true
+	end
+	if setlowhigh == 2 then
+		r=math.random(1,2)
+		if r == 1 then
+			bethigh=true
+		else
+			bethigh=false
+		end
+	end
 
-function countTime() {
-    setInterval(() => {
-        playTime = (new Date().getTime()) - startTime;
-        playDays = Math.floor(playTime / (1e3 * 6e1 * 6e1 * 24));
-        playHours = Math.floor((playTime % (1e3 * 6e1 * 6e1 * 24)) / (1e3 * 6e1 * 6e1));
-        playMinutes = Math.floor((playTime % (1e3 * 6e1 * 6e1)) / (1e3 * 6e1));
-        playSeconds = Math.floor((playTime % (1e3 * 6e1)) / 1e3);
-        $('#botRunTime').html(`${playDays}:${playHours}:${playMinutes}:${playSeconds}`);
-    }, 1e3)
-}
+	if (win) then
+		if setlowhigh == 3 then
+			r=math.random(1,2)
+			if r == 1 then
+				bethigh=true
+			else
+				bethigh=false
+			end
+		end
+	end
 
-function mathRandom(min, max) {
-    if (!max) return Math.floor(Math.random() * (min - 0 + 1)) + 0
-    return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-function sleep(n){
-    var now = new Date().getTime();
-    while(new Date().getTime() < now + n){ /* do nothing */ };
-    console.log("betdelay: " +n+ " ms");  
-}
-
-function drawChart() {
-    dps = [{ x: betsChart, y: profitChart }]
-    chart = new CanvasJS.Chart('botChart', {
-        backgroundColor: 'black',
-        theme: 'light2',
-        title: {
-            //text: BOT_URL,
-            fontColor: 'white',
-            fontSize: 20
-        },
-        data: [{
-            type: 'line',
-            markerSize: 0,
-            dataPoints: dps
-        }]
-    })
-    chart.render();
-}
-
-function updateChart() {
-    dps.push({
-        x: betsChart,
-        y: profitChart,
-        color: color
-    })
-    if (dps[dps.length - 2]) dps[dps.length - 2].lineColor = color;
-    if (dps.length > 1e3) dps.shift();
-    chart.render();
-}
-
-function updateStats() {
-    $('#botBalance').text(`${Number(balance).toFixed(8)}`);
-    $('#botProfit').text(`${Number(profit).toFixed(8)}`);
-    $('#botBets').text(`${bets}`);
-    $('#botWins').text(`${wins}`);
-    $('#botLosses').text(`${losses}`);
-}
-
-function updateHistory(amount, target, result, profit) {
-    var history = `<tr style='color: ${Number(profit) >= 0 ? 'green' : 'red'}'>
-        <td>${Number(amount).toFixed(8)}</td>
-        <td>${target}</td>
-        <td>${result}</td>
-        <td>${Number(profit) >= 0 ? '+' + Number(profit).toFixed(8) : Number(profit).toFixed(8)}</td>
-    </tr>`;
-    $('#botHistory').prepend(history);
-    var maxLine = 20;
-    if ($('#botHistory > tr').length > maxLine);
-        for (var i = 0; i < $('#botHistory > tr').length - maxLine; i++) $('#botHistory > tr:last-child').remove();
-}
-
-function start() {
-    run = true;
-    sOW = false;
-	checkStartBalance = true;
-	//coin = JSON.parse(localStorage.getItem('v2_currency')).currency; // На виртуальном сервере не работает
-    if ($('#botCode').val() == '') return alert('Enter your code');
-    code = $('#botCode').val();
-    code = code.replace(/!=/g, "~=");
-    code = code.replace(/!/g, "not ");
-    code = code.replace(/([a-zA-Z]*[0-9]*\s*)\+\=(\s*[a-zA-Z]*[0-9]*)/g, '$1=$1+$2 ');
-    code = code.replace(/([a-zA-Z]*[0-9]*\s*)\-\=(\s*[a-zA-Z]*[0-9]*)/g, '$1=$1-$2 ');
-    code = code.replace(/([a-zA-Z]*[0-9]*\s*)\*\=(\s*[a-zA-Z]*[0-9]*)/g, '$1=$1*$2 ');
-    code = code.replace(/([a-zA-Z]*[0-9]*\s*)\/\=(\s*[a-zA-Z]*[0-9]*)/g, '$1=$1/$2 ');
-    fengari.load(code)();
-		if(checkStartBalance == true){
-			getBalance(function(){
-				if (run) return doBet();
-			})
-			checkStartBalance = false;
-		}else{
-			if (run) return doBet();
-		}
-    //return doBet();
-}
-
-function stop() {
-    run = false;
-    sOW = false;
-}
-
-function continueBet() {
-    run = true;
-    sOW = false;
-    return doBet();
-}
-
-function stopOnWin() {
-    sOW = true;
-}
-
-function resetStats() {
-    profit = 0;
-    bets = 0;
-    wins = 0;
-    losses = 0;
-    return updateStats();
-}
-
-function resetChart() {
-    betsChart = 0;
-    profitChart = 0;
-    return drawChart();
-}
-
-function donation() {
-    //window.open(`${BOT_URL}`)
-}
-
-function loadLua() {
-    fengari.load(`function invest(amount)
-        return amount
-    end`)()
-    fengari.load(`function start()
-        js.global:start()
-    end`)()
-    fengari.load(`function stop()
-        js.global:stop()
-    end`)()
-    fengari.load(`function resetseed()
-        js.global:resetSeed()
-    end`)()
-    fengari.load(`function resetstats()
-        js.global:resetStats()
-    end`)()
-    fengari.load(`math.random = function(min, max)
-        return js.global:mathRandom(min, max)
-    end`)()
-	fengari.load(`function sleep(n)
-        js.global:sleep(n)
-    end`)()
-    fengari.load('balance=' + balance + '\nnextbet=' + nextBet + '\nbethigh=' + betHigh + '\nchance=' + chance)()
-}
-
-function sendLua() {
-    fengari.load('previousbet=' + previousBet + '\nwin=' + win + '\nbalance=' + balance + '\nprofit=' + profit + '\ncurrentprofit=' + currentProfit)()
-    fengari.load('bets=' + bets + '\wins=' + wins + '\nlosses=' + losses + '\nwinstreak=' + winStreak + '\nlosestreak=' + loseStreak + '\ncurrentstreak=' + currentStreak)()
-    fengari.load('lastBet={\nchance=' + lastBet.chance + ',\nroll=' + lastBet.roll + '\n}')()
-    fengari.load('dobet()')()
-}
-
-addJs('https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js', () => {
-    //addJs(BOT_URL + '/init.js', () => {
-        //botInstaller().then(() => {
-            addBot();
-        //}).catch(error => console.log(error))
-    //})
-})
-
-function addBot() {
-    addCss(BOT_URL + '/bot.css', () => {
-        addJs('https://canvasjs.com/assets/script/canvasjs.min.js', () => {
-            /*if (localStorage.getItem('token'))*/ return addJs(BOT_URL + '/fengari-web.js', () => {
-                $('body').prepend(bot);
-                //$('.header').hide();
-                //$('#botCoin').text((JSON.parse(localStorage.getItem('v2_currency')).currency).toUpperCase());
-				$('#botCoin').text(coin.toUpperCase());
-                //balance = Number(document.querySelector('#app > div > header > div.header--row > div.header__box.header__box-flex > div > div > div > div.balance__currency.icon-wrapper > span > span > span.balance__currency--value-big').innerHTML)
-                countTime();
-                loadLua();
-                drawChart();
-                updateStats();
-                //alert('Connected');
-            })
-        })
-    })
-}
-
-function botToggle() {
-    if (show) {
-        show = false;
-        $('#botBody').hide();
-        $('.header').show();
-    } else {
-        show = true;
-        $('#botBody').show();
-        $('.header').hide();
-    }
-}
-
-function resetSeed() {
-
-}
-
-function getBalance(callback) {
-fetch("https://api.stake.com/graphql", {
-  "headers": {
-    "accept": "*/*",
-    //"accept-language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
-    "content-type": "application/json",
-    //"sec-ch-ua": "\" Not;A Brand\";v=\"99\", \"Microsoft Edge\";v=\"91\", \"Chromium\";v=\"91\"",
-    //"sec-ch-ua-mobile": "?0",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
-    "x-access-token": token,
-    //"x-language": "ru",
-    "x-lockdown-token": ""
-  },
-  //"referrer": "https://"+mirror+"/",
-  //"referrerPolicy": "strict-origin-when-cross-origin",
-  "body": "{\"operationName\":\"initialUserRequest\",\"variables\":{},\"query\":\"query initialUserRequest {\\n  user {\\n    ...UserAuth\\n    __typename\\n  }\\n}\\n\\nfragment UserAuth on User {\\n  id\\n  name\\n  email\\n  hasPhoneNumberVerified\\n  hasEmailVerified\\n  hasPassword\\n  intercomHash\\n  createdAt\\n  hasTfaEnabled\\n  mixpanelId\\n  hasOauth\\n  flags {\\n    flag\\n    __typename\\n  }\\n  roles {\\n    name\\n    __typename\\n  }\\n  balances {\\n    ...UserBalanceFragment\\n    __typename\\n  }\\n  activeClientSeed {\\n    id\\n    seed\\n    __typename\\n  }\\n  previousServerSeed {\\n    id\\n    seed\\n    __typename\\n  }\\n  activeServerSeed {\\n    id\\n    seedHash\\n    nextSeedHash\\n    nonce\\n    blocked\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment UserBalanceFragment on UserBalance {\\n  available {\\n    amount\\n    currency\\n    __typename\\n  }\\n  vault {\\n    amount\\n    currency\\n    __typename\\n  }\\n  __typename\\n}\\n\"}",
-  "method": "POST",
-  "mode": "cors",
-  "credentials": "omit"
-}).then(response => {
-	return response.json();
-}).then(function(data) {
-    //console.log( data );
-	var item = data.data.user.balances.find(item => item.available.currency == coin);
-        balance = item.available.amount;
-		startbalance = balance;
+	if balance >= lastbalance then
 		lastbalance = balance;
-		sbalance = balance;	
-		callback();
-});
-}
-
-var waitBet = setInterval(function() {
-    doBet();
-}, 10000);
-clearInterval(waitBet);
-
-function doBet() {
-	if(run){
+			if setlowhigh == 4 then
+				r=math.random(1,2)
+				if r == 1 then
+					bethigh=true
+				else
+					bethigh=false
+				end
+			end
+	end
 		
-		clearInterval(waitBet);
-        waitBet = setInterval(function() {
-			if (run) doBet();
-		},5000);
-		
-		sendBet().then(data => {
-				
-			if ( data.data == null && data.errors[0].message != "Please slow down" /* && data.errors[0].errorType != "parallelCasinoBet" */ ) {
-				run = false;
-				clearInterval(waitBet);	
-				alert(data.errors[0].message);
-				return;
-			}
-			if ( data.data == null && data.errors[0].message == "Please slow down" /* && data.errors[0].errorType == "parallelCasinoBet" */ ) {
-				setTimeout(doBet, 1000);
-				return;
-			}
+	if wager == 0 then
+		if ((100*(startbalance-balance)/balance) <= lossPerc) then
+			chance = math.random(minChanceWin*100,maxChanceWin*100)/100;
+			basebet = math.random(minBaseBet*100000000,maxBaseBet*100000000)/100000000;
+			nextbet = basebet;
+		else
+			chance = math.random(minChanceLoss*100,maxChanceLoss*100)/100;
+			if recover == 0 then
+				pay = (100-casino)/chance;
+				nextbet = ((startbalance-balance+basebet)/(pay-1))/autoRecDiv;
+			end
+			if recover == 1 then
+				if (win) then
+					nextbet *= multBetWin;
+				else
+					nextbet *= multBetLoss;
+				end
+			end
+		end
+	end
 
-			if ( cur_data != data.data && data.data != null /* && gameMinesRun == 0 || gameMinesRun == 3 || gameMinesRun == 2 && winMines == false */ ) {
-				cur_data = data.data;
-				
-				var response = data.data.diceRoll;
-				
-			/*
-			if(checkStartBalance == true){
-				balance = Number(response.userBalance.amount);
-				startbalance = balance;
-				lastbalance = balance;
-				sbalance = balance;
-				checkStartBalance = false;
-			}
-			*/
-			
-        // console.log(response)
-		currentProfit = Number(response.payout - response.amount);
-		profit += Number(currentProfit);
-		balance += Number(currentProfit);
-        lastBet.roll = Number(response.state.result.toFixed(2));
-        profitChart += Number(currentProfit);
-        bets++;
-        betsChart++;
-        if (Number(currentProfit) >= 0) {
-            wins++;
-            win = true;
-            winStreak++;
-            loseStreak = 0;
-            currentStreak = winStreak;
-            color = 'green';
-        } else {
-            losses++;
-            win = false;
-            loseStreak++;
-            winStreak = 0;
-            currentStreak = 0 - loseStreak;
-            color = 'red';
-        }
-		previousBet = Number(nextBet);
-		lastBet.chance = Number(chance);
-        updateChart();
-        updateStats();
-        var target = `${betHigh ? '>' : '<'}${Number(response.state.target)}`;
-        updateHistory(nextBet, target, response.state.result.toFixed(2), currentProfit);
-        sendLua();
-        if (win && sOW) return stop();
-        if (run) return doBet();
+	if wager == 1 then
+		if((100*(lastbalance-balance)/balance) <= lossPerc) then 
+			chance = math.random(minChanceWin*100,maxChanceWin*100)/100;
+			basebet = math.random(minBaseBet*100000000,maxBaseBet*100000000)/100000000;
+			nextbet = basebet;
+		else
+			chance = math.random(minChanceLoss*100,maxChanceLoss*100)/100;
+			if recover == 0 then
+				pay = (100-casino)/chance;
+				nextbet = ((lastbalance-balance+basebet)/(pay-1))/autoRecDiv;
+			end
+			if recover == 1 then
+				if (win) then
+					nextbet *= multBetWin;
+				else
+					nextbet *= multBetLoss;
+				end
+			end
+		end
+	end
+	
+--------------------------------
 
-		}else{
-			return;
-		}
+	if nextbet < basebet then nextbet = basebet end
+	if nextbet > maxBet then nextbet = maxBet end
+	
+	
+	  if (nextbet > balance) then
+        print("Insufficient funds " ..balance);
+        stop();
+      end
 
-		}).catch(error => {
-			console.log(error);
-			//if (betting == true) setTimeout(() => {doBet()},1000);
-		})
-	}
-}
+	  if (nextbet > stopBetOver) then
+        print("Stop Bet Over " ..nextbet);
+        stop();
+      end
+	  
+	  stoplevel = (100-balanceRisk)*lastbalance/100;
+	  if (balance - nextbet < stoplevel) then
+        print("Balance Risk " ..balance);
+        stop();
+      end
+	  
+	  if (lastbalance - balance >= stopLossAmount) then
+        print("Stop Loss Amount " ..(lastbalance - balance));
+        stop();
+      end
 
-async function sendBet() {
-		nextBet = fengari.load('return nextbet')();
-		chance = fengari.load('return chance')();
-		betHigh = fengari.load('return bethigh')();
-		var a = await $.ajax({
-			url: 'https://api.stake.com/graphql',
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json',
-				'x-access-token': token
-			},
-			data: JSON.stringify({ "operationName": "DiceRoll", "variables": { "target": Number(`${betHigh ? (99.99 - chance).toFixed(2) : chance.toFixed(2)}`), "condition": `${betHigh ? 'above' : 'below'}`, "identifier": random_String(21), "amount": Number(nextBet.toFixed(8)), "currency": coin }, "query": "mutation DiceRoll($amount: Float!, $target: Float!, $condition: CasinoGameDiceConditionEnum!, $currency: CurrencyEnum!, $identifier: String!) {\n  diceRoll(amount: $amount, target: $target, condition: $condition, currency: $currency, identifier: $identifier) {\n    ...CasinoBetFragment\n    state {\n      ...DiceStateFragment\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment CasinoBetFragment on CasinoBet {\n  id\n  active\n  payoutMultiplier\n  amountMultiplier\n  amount\n  payout\n  updatedAt\n  currency\n  game\n  user {\n    id\n    name\n    __typename\n  }\n  __typename\n}\n\nfragment DiceStateFragment on CasinoGameDice {\n  result\n  target\n  condition\n  __typename\n}\n" })
-		})
-		return a;
-}
-
-function random_String(length) {
-	var chars = '0123456789abcdefghijklmnopqrstuvwxyz'
-	var result = '';
-	for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
-	return result;
-}
-
-function getCookie(cname) {
-  let name = cname + "=";
-  let decodedCookie = decodeURIComponent(document.cookie);
-  let ca = decodedCookie.split(";");
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) == " ") {
-      c = c.substring(1);
-    }
-    if (c.indexOf(name) == 0) {
-      return c.substring(name.length, c.length);
-    }
-  }
-  return "";
-}
-//console.log(getCookie("session"));
-var token = getCookie("session");
-
+	  if (balance < balanceUnder) then
+        print("Stop Balance Under " ..balance);
+        stop();
+      end
+	  
+	  if (profit >= targetProfit) then
+			print('Target Profit ' ..profit);
+			stop();
+	  end
+	  
+	  if (balance >= targetBalance) then
+			print('Target Balance ' ..balance);
+			stop();
+	  end
+	  
+end
